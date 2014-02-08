@@ -1,5 +1,4 @@
 
-
 import assign2.*;
 import java.util.Scanner;
 import java.util.regex.Pattern;
@@ -47,3 +46,157 @@ public class Assign2 {
         System.out.println( "**************" );
     }
 }
+
+
+
+
+
+
+public interface Term {
+
+    int coeff();
+
+    int exp();
+
+    String toString();
+}
+
+
+
+
+
+
+
+import java.util.Iterator;
+import java.util.Scanner;
+
+public class Polynomial {
+
+    public static final Polynomial ZERO = new Polynomial();
+    public static final String REGEX_TERM = "\\-?[0-9a-zA-Z]+[\\^0-9]*";
+    public static final String REGEX_MINUS = "\\-";
+    public static final String REGEX_VARIABLE = "[a-zA-Z]";
+    public static final String REGEX_VAR_RAISED = "[a-zA-Z]*\\^";
+    public static final String REGEX_POWER = "\\^[0-9]+";
+    public static final String REGEX_COEFF_OR_VAR = "[0-9a-zA-Z]+";
+    public static final String REGEX_EMPTY_OR_MINUS = "^$|\\-";
+    
+    private int[] coeff;
+    private int degree;
+    
+    private static class MyTerm implements Term {
+        /* PROVIDE COMPLETE IMPLEMENTATION, INCLUDING toString */
+        private int coeff;
+        private int exp;
+        
+        public MyTerm(int coeff, int exp){
+            this.coeff = coeff;
+            this.exp = exp;
+        }
+        
+        public int coeff(){
+            return this.coeff;
+        }
+
+        public int exp(){
+            return this.exp;
+        }
+
+        public String toString(){
+            if(this.coeff == 0) return "";
+            return this.coeff + (this.exp > 0 ? "x^" + this.exp : "" );
+        };
+    }
+
+    private class MyIterator implements Iterator<Term> {
+        int current = 0;
+        
+        public boolean hasNext(){
+            return current != coeff.length - 1; 
+        }
+        
+        public Term next() {
+            int currentTemp = current;
+            current++;
+            return new MyTerm(coeff[currentTemp], currentTemp);
+        }
+        
+        public void remove(){
+            coeff[current] = 0;
+        }
+    }
+
+    public Polynomial() {
+        this.degree = 0;
+        this.coeff = new int[1];
+        this.coeff[0] = 0;
+    }
+
+    public Polynomial(String str) {
+        //Handle special cases or 1 or 0 degree based on whether any variable is present.
+        this.degree = str.contains(REGEX_VARIABLE) ? 1 : 0 ;
+        Scanner pScan = new Scanner(str);
+        
+        //Figure out the highest power present, giving us a degree.
+        while(pScan.hasNext(REGEX_POWER)){
+            int nextPower = Integer.parseInt(pScan.next(REGEX_POWER).substring(1));
+            if(nextPower > this.degree) this.degree = nextPower;
+        }
+        
+        //Set our coefficient array to handle each degree. We need degree+1 spaces because of 
+        this.coeff = new int[this.degree+1];
+        
+        //Fill our array with coefficients at indexes that represent the degrees of each term.
+        pScan.reset();
+        while(pScan.hasNext(REGEX_TERM)){
+            String[] termParts = pScan.next(REGEX_TERM).split(REGEX_VAR_RAISED);
+            if(termParts[0].matches(REGEX_EMPTY_OR_MINUS)) termParts[0] += "1";
+            
+            int parsedCoeff = Integer.parseInt(termParts[0]);
+            int parsedPower = termParts.length > 1 ? Integer.parseInt(termParts[1]) : 0;
+            
+            this.coeff[parsedPower] += parsedCoeff;
+            if(parsedPower > this.degree) this.degree = parsedPower;
+        }
+        
+    }
+
+    // Makes an independent copy
+    public Polynomial(Polynomial other) {
+        this.coeff = other.getCoeff();
+        this.degree = other.getDegree();
+    }
+    
+    public int[] getCoeff(){
+        return this.coeff;
+    }
+    
+    public int getDegree(){
+        return this.degree;
+    }
+
+    public Polynomial negate() { return null; }
+
+    public Polynomial add(Polynomial rhs) { return null; }
+
+    public Polynomial subtract(Polynomial rhs) { return null; }
+
+    public Polynomial multiply(Polynomial rhs) { return null; }
+
+    public boolean equals(Object other) { return false; }
+
+    public String toString() {
+        String out = "";
+        for(int i = 0; i<this.coeff.length; i++){
+            if(i != 0 && coeff[i] > 0) out += "+";
+            out += coeff[i] != 0 ? new MyTerm(coeff[i], i) : "";
+        }
+        return out;
+    }
+
+    public Iterator<Term> iterator() {
+        return new MyIterator();
+    }
+}
+
+
